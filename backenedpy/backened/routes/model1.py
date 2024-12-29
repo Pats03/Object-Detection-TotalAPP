@@ -47,29 +47,11 @@ transform = transforms.Compose([
 # Function to predict counts for a new image
 
 
-def predict_count(image_path):
-    # Check if the input is a URL or a local file path
-    print("came_here")
-    if image_path.startswith('http'):
-        # If it's a URL, download the image
-        response = requests.get(image_path)
-        image = Image.open(BytesIO(response.content)).convert("RGB")
-    else:
-        # If it's a local file path, open the image directly
-        image = Image.open(image_path).convert("RGB")
-
-    # Apply the necessary transformations to the image
-    image = transform(image).unsqueeze(0).to(device)  # Add batch dimension and move to GPU if available
-
-    # Predict with the trained model
+def predict_count(image):
+    image = transform(image).unsqueeze(0).to(device)
     with torch.no_grad():
         output = model(image)
-    
-    # Get the predicted counts
-    total, duplicates, originals = output.cpu().numpy()[0]
-    
-    # Return the counts
-    return total, duplicates, originals
+    return output.cpu().numpy()[0]
 
 
 

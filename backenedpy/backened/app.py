@@ -7,6 +7,7 @@ from routes.proxy import proxy_bp  # Import the proxy blueprint
 from routes.stich import stich_bp
 from routes.model1 import predict_count
 from flask import Blueprint, request, jsonify
+from PIL import Image
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -34,20 +35,16 @@ def handle_predict():
         return '', 200
     
     # Check if the 'url' key is in the request body
-    if 'url' not in request.json:
-        return jsonify({"error": "No URL provided"}), 400
+    if 'stitched_image' not in request.files:
+        return jsonify({"error": "Stitched image is missing"}), 400
+
     
-    url = request.json['url']
-    
-    # Validate the URL (basic check)
-    if not url:
-        return jsonify({"error": "Provided URL is invalid"}), 400
 
     # Perform prediction
     try:
-        result = predict_count(url)
-        total, duplicates, originals = result
-        return jsonify({"total": int(total), "duplicates": int(duplicates), "originals": int(originals)}), 200
+        image = Image.open(request.files['stitched_image']).convert("RGB")
+        total, duplicates, originals = predict_count(image)
+        return jsonify({"total": int(total), "duplicates": int(duplicates), "originals": int(originals)})
         
     except Exception as e:
         return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
