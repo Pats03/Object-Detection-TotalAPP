@@ -152,20 +152,22 @@ def predict_count(image_path):
 
 @model_bp.route('/predict', methods=['POST'])
 def predict():
-    # Extract JSON payload
-    data = request.json
-
-    if not data or 'image_url' not in data:
-        return jsonify({'error': 'No image URL provided'}), 400
-
-    image_url = data['image_url']
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'}), 400
     
+    # Get the image from the request
+    image = request.files['image']
+    
+    # Save the image locally
+    image_path = 'uploaded_image.jpg'  # Temporary path for saving the uploaded image
     try:
-        # Download the image from the URL and process it
-        image_path = download_image(image_url)  # You need to implement a function to download the image
-        
-        # Predict the count
+        image.save(image_path)
+
+        # Predict using the saved image
         predicted_count = predict_count(image_path)
+
+        # Clean up the saved image after prediction
+        os.remove(image_path)
 
         if predicted_count is not None:
             return jsonify({'predicted_count': predicted_count}), 200
@@ -173,17 +175,7 @@ def predict():
             return jsonify({'error': 'Prediction failed'}), 500
 
     except Exception as e:
+        # Clean up the saved image in case of an error
+        if os.path.exists(image_path):
+            os.remove(image_path)
         return jsonify({'error': 'Server error', 'details': str(e)}), 500
-
-
-# Helper function to download the image from a URL
-def download_image(image_url):
-    response = requests.get(image_url)
-    if response.status_code == 200:
-        # Save the image to a local path
-        image_path = 'temp_image.jpg'  # You can modify the path as necessary
-        with open(image_path, 'wb') as f:
-            f.write(response.content)
-        return image_path
-    else:
-        raise Exception('Failed to download image')
