@@ -56,6 +56,8 @@ def predict_count(image):
 
 
 
+
+
 # # Initialize variables for efficiency calculation
 # total_error = 0
 # duplicate_error = 0
